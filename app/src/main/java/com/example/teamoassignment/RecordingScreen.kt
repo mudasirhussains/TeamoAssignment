@@ -238,12 +238,12 @@ fun PortraitLayout(
                 .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            IconButton(onClick = {}) {
-                Image(
-                    painter = painterResource(id = R.drawable.cancel_button),
-                    contentDescription = "My Image"
-                )
-            }
+
+            Image(
+                modifier = Modifier.clickable { },
+                painter = painterResource(id = R.drawable.cancel_button),
+                contentDescription = "My Image"
+            )
 
             UploadButtonWithCounter(count = recordingCount, onClick = onUploadClick)
         }
@@ -271,36 +271,41 @@ fun LandscapeLayout(
     onRecordClick: () -> Unit,
     onUploadClick: () -> Unit
 ) {
-    Row(
-        modifier = Modifier.fillMaxSize(),
-        verticalAlignment = Alignment.CenterVertically
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .weight(0.2f),
-            horizontalAlignment = Alignment.CenterHorizontally
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            IconButton(onClick = {}) {
-                Icon(Icons.Default.Close, contentDescription = null, tint = Color.White)
-            }
-
-            UploadButtonWithCounter(count = recordingCount, onClick = onUploadClick)
+            Image(
+                modifier = Modifier
+                    .clickable { }
+                    .padding(top = 8.dp),
+                painter = painterResource(id = R.drawable.cancel_button),
+                contentDescription = "Cancel"
+            )
+            UploadButtonWithCounter(
+                count = recordingCount,
+                onClick = onUploadClick
+            )
         }
 
         Spacer(modifier = Modifier.weight(1f))
-
-        RecordButton(isRecording, onRecordClick, Modifier.size(72.dp))
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Column(
+        Row(
             modifier = Modifier
-                .padding(16.dp)
-                .weight(0.2f),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             ControlButton(R.drawable.cog, stringResource(R.string.settings)) {}
+            RecordButton(isRecording, onRecordClick, Modifier.size(64.dp))
             ControlButton(R.drawable.camera, stringResource(R.string._24mm)) {}
         }
     }
