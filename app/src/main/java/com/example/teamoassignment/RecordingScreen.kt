@@ -246,30 +246,22 @@ fun RecordingUI(
     onRecordClick: () -> Unit,
     onUploadClick: () -> Unit
 ) {
-    AnimatedContent(
-        targetState = isPortrait,
-        transitionSpec = {
-            fadeIn(tween(300)) togetherWith fadeOut(tween(300))
-        },
-        label = "orientation_ui"
-    ) { portrait ->
-        if (portrait) {
-            PortraitLayout(
-                isRecording = isRecording,
-                recordingTime= recordingTime,
-                recordingCount = recordingCount,
-                onRecordClick = onRecordClick,
-                onUploadClick = onUploadClick
-            )
-        } else {
-            LandscapeLayout(
-                isRecording = isRecording,
-                recordingTime= recordingTime,
-                recordingCount = recordingCount,
-                onRecordClick = onRecordClick,
-                onUploadClick = onUploadClick
-            )
-        }
+    if (isPortrait) {
+        PortraitLayout(
+            isRecording = isRecording,
+            recordingTime= recordingTime,
+            recordingCount = recordingCount,
+            onRecordClick = onRecordClick,
+            onUploadClick = onUploadClick
+        )
+    } else {
+        LandscapeLayout(
+            isRecording = isRecording,
+            recordingTime= recordingTime,
+            recordingCount = recordingCount,
+            onRecordClick = onRecordClick,
+            onUploadClick = onUploadClick
+        )
     }
 }
 
