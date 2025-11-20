@@ -31,10 +31,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.imePadding
 import androidx.lifecycle.LifecycleOwner
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
@@ -98,6 +104,7 @@ fun RecordingScreen() {
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
+        // Camera preview extends edge-to-edge
         CameraPreview(
             modifier = Modifier.fillMaxSize(),
             cameraProvider = cameraProvider,
@@ -105,6 +112,7 @@ fun RecordingScreen() {
             onVideoCaptureReady = { videoCapture = it }
         )
 
+        // UI respects system bars with padding
         RecordingUI(
             isPortrait = isPortrait,
             isRecording = isRecording,
@@ -156,7 +164,12 @@ fun RecordingTimer(timeSec: Long) {
     val minutes = timeSec / 60
     val seconds = timeSec % 60
 
-    Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
+    Row(
+        horizontalArrangement = Arrangement.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+    ) {
 
         Box(
             modifier = Modifier
@@ -276,7 +289,10 @@ fun PortraitLayout(
         }
 
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
@@ -303,7 +319,7 @@ fun PortraitLayout(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp),
+                    .padding(horizontal = 24.dp, vertical = 24.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -352,7 +368,10 @@ fun LandscapeLayout(
         }
 
         Row(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding(),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
@@ -364,34 +383,32 @@ fun LandscapeLayout(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Image(
-                        modifier = Modifier
-                            .clickable { }
-                            .padding(top = 8.dp),
-                        painter = painterResource(id = R.drawable.cancel_button),
-                        contentDescription = "Cancel"
-                    )
-
                     UploadButtonWithCounter(
                         count = recordingCount,
                         onClick = onUploadClick
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Image(
+                        modifier = Modifier
+                            .clickable { },
+                        painter = painterResource(id = R.drawable.cancel_button),
+                        contentDescription = "Cancel"
                     )
                 }
             }
 
             Spacer(modifier = Modifier.weight(1f))
-
-            RecordImageButton(isRecording, onClick = onRecordClick)
-            Spacer(modifier = Modifier.weight(1f))
             Column(
                 modifier = Modifier
                     .padding(16.dp)
-                    .weight(0.2f),
+                    .weight(0.3f),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                ControlButton(R.drawable.cog, stringResource(R.string.settings)) {}
-
                 ControlButton(R.drawable.camera, stringResource(R.string._24mm)) {}
+                Spacer(modifier = Modifier.height(20.dp))
+                RecordImageButton(isRecording, onClick = onRecordClick)
+                Spacer(modifier = Modifier.height(20.dp))
+                ControlButton(R.drawable.cog, stringResource(R.string.settings)) {}
             }
         }
     }
@@ -490,7 +507,13 @@ fun ControlButton(icon: Int, label: String, onClick: () -> Unit) {
                 contentDescription = "My Image"
             )
             Spacer(modifier = Modifier.width(4.dp))
-            Text(label, color = Color.White, fontSize = 12.sp)
+            Text(
+                text = label,
+                color = Color.White,
+                fontSize = 12.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
