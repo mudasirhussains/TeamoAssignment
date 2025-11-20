@@ -16,8 +16,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,6 +38,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.coroutines.resume
@@ -68,6 +67,18 @@ fun RecordingScreen() {
     var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
     var videoCapture by remember { mutableStateOf<VideoCapture<Recorder>?>(null) }
     var recording by remember { mutableStateOf<Recording?>(null) }
+    var recordingTime by remember { mutableStateOf(0L) }
+
+    if (isRecording) {
+        LaunchedEffect(isRecording) {
+            while (isRecording) {
+                delay(1000)
+                recordingTime += 1
+            }
+        }
+    } else {
+        recordingTime = 0
+    }
 
     val configuration = LocalConfiguration.current
     val isPortrait = configuration.screenHeightDp > configuration.screenWidthDp
@@ -97,6 +108,7 @@ fun RecordingScreen() {
         RecordingUI(
             isPortrait = isPortrait,
             isRecording = isRecording,
+            recordingTime = recordingTime,
             recordingCount = recordingCount,
             onRecordClick = {
                 if (isRecording) {
@@ -136,6 +148,31 @@ fun RecordingScreen() {
 
     }
 }
+
+@Composable
+fun RecordingTimer(timeSec: Long) {
+    if (timeSec <= 0) return
+
+    val minutes = timeSec / 60
+    val seconds = timeSec % 60
+
+    Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
+
+        Box(
+            modifier = Modifier
+                .padding(top = 32.dp)
+                .background(Color(0x66000000), RoundedCornerShape(50))
+                .padding(horizontal = 16.dp, vertical = 6.dp),
+        ) {
+            Text(
+                text = String.format("%02d:%02d", minutes, seconds),
+                color = Color.White,
+                fontSize = 14.sp
+            )
+        }
+    }
+}
+
 
 @Composable
 fun CameraPreview(
@@ -191,6 +228,7 @@ fun CameraPreview(
 fun RecordingUI(
     isPortrait: Boolean,
     isRecording: Boolean,
+    recordingTime: Long,
     recordingCount: Int,
     onRecordClick: () -> Unit,
     onUploadClick: () -> Unit
@@ -205,6 +243,7 @@ fun RecordingUI(
         if (portrait) {
             PortraitLayout(
                 isRecording = isRecording,
+                recordingTime= recordingTime,
                 recordingCount = recordingCount,
                 onRecordClick = onRecordClick,
                 onUploadClick = onUploadClick
@@ -212,6 +251,7 @@ fun RecordingUI(
         } else {
             LandscapeLayout(
                 isRecording = isRecording,
+                recordingTime= recordingTime,
                 recordingCount = recordingCount,
                 onRecordClick = onRecordClick,
                 onUploadClick = onUploadClick
@@ -224,92 +264,139 @@ fun RecordingUI(
 @Composable
 fun PortraitLayout(
     isRecording: Boolean,
+    recordingTime: Long,
     recordingCount: Int,
     onRecordClick: () -> Unit,
     onUploadClick: () -> Unit
 ) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+    Box(modifier = Modifier.fillMaxSize()) {
 
-            Image(
-                modifier = Modifier.clickable { },
-                painter = painterResource(id = R.drawable.cancel_button),
-                contentDescription = "My Image"
-            )
-
-            UploadButtonWithCounter(count = recordingCount, onClick = onUploadClick)
+        if (isRecording) {
+            RecordingTimer(recordingTime)
         }
 
-        Spacer(modifier = Modifier.weight(1f))
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            ControlButton(R.drawable.cog, stringResource(R.string.settings)) {}
-            RecordButton(isRecording, onRecordClick, Modifier.size(64.dp))
-            ControlButton(R.drawable.camera, stringResource(R.string._24mm)) {}
+
+            if (!isRecording) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+
+                    Image(
+                        modifier = Modifier.clickable { },
+                        painter = painterResource(id = R.drawable.cancel_button),
+                        contentDescription = "Cancel"
+                    )
+
+                    UploadButtonWithCounter(count = recordingCount, onClick = onUploadClick)
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ControlButton(R.drawable.cog, stringResource(R.string.settings)) {}
+                RecordImageButton(isRecording, onRecordClick)
+                ControlButton(R.drawable.camera, stringResource(R.string._24mm)) {}
+            }
         }
     }
 }
 
 @Composable
+fun RecordImageButton(
+    isRecording: Boolean,
+    onClick: () -> Unit
+) {
+    val icon = if (isRecording) {
+        R.drawable.recording
+    } else {
+        R.drawable.record_idlesvg
+    }
+
+    Image(
+        painter = painterResource(id = icon),
+        contentDescription = "Record",
+        modifier = Modifier
+            .size(90.dp)
+            .clickable { onClick() }
+    )
+}
+
+
+
+@Composable
 fun LandscapeLayout(
     isRecording: Boolean,
+    recordingTime: Long,
     recordingCount: Int,
     onRecordClick: () -> Unit,
     onUploadClick: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Image(
-                modifier = Modifier
-                    .clickable { }
-                    .padding(top = 8.dp),
-                painter = painterResource(id = R.drawable.cancel_button),
-                contentDescription = "Cancel"
-            )
-            UploadButtonWithCounter(
-                count = recordingCount,
-                onClick = onUploadClick
-            )
+    Box(modifier = Modifier.fillMaxSize()) {
+
+        if (isRecording) {
+            RecordingTimer(recordingTime)
         }
 
-        Spacer(modifier = Modifier.weight(1f))
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 32.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceEvenly
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            ControlButton(R.drawable.cog, stringResource(R.string.settings)) {}
-            RecordButton(isRecording, onRecordClick, Modifier.size(64.dp))
-            ControlButton(R.drawable.camera, stringResource(R.string._24mm)) {}
+
+            if (!isRecording) {
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .weight(0.2f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Image(
+                        modifier = Modifier
+                            .clickable { }
+                            .padding(top = 8.dp),
+                        painter = painterResource(id = R.drawable.cancel_button),
+                        contentDescription = "Cancel"
+                    )
+
+                    UploadButtonWithCounter(
+                        count = recordingCount,
+                        onClick = onUploadClick
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            RecordImageButton(isRecording, onClick = onRecordClick)
+            Spacer(modifier = Modifier.weight(1f))
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .weight(0.2f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                ControlButton(R.drawable.cog, stringResource(R.string.settings)) {}
+
+                ControlButton(R.drawable.camera, stringResource(R.string._24mm)) {}
+            }
         }
     }
 }
+
 
 @Composable
 fun RecordButton(
